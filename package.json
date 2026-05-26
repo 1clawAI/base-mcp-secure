@@ -10,6 +10,7 @@
     "base-mcp-secure": "dist/main.js"
   },
   "scripts": {
+    "setup": "tsx scripts/setup.ts",
     "build": "tsc",
     "dev": "tsx src/main.ts",
     "start": "node dist/main.js",

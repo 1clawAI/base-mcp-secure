@@ -27,13 +27,37 @@ Claude/Cursor ─► Shroud TEE ─► LLM ─► base-mcp-secure (Vault-bootstr
 
 ## Quick Start
 
-### 1. Install
+### Option A: One-Command Setup (Recommended)
+
+```bash
+git clone https://github.com/1clawAI/base-mcp-secure.git
+cd base-mcp-secure
+npm install
+npm run setup
+```
+
+The setup wizard asks for your 1Claw human API key (`1ck_...`) and automatically creates:
+- A vault for your Base MCP secrets
+- An agent with Intents API + Shroud + Base guardrails
+- A signing key on Base chain
+- An access policy granting the agent read on `base-mcp/*`
+
+It outputs a ready-to-paste MCP config with both `base-mcp-secure` and the `1claw` MCP server paired together.
+
+> Get your API key at [1claw.xyz → Settings → API Keys](https://1claw.xyz/settings/api-keys)
+
+### Option B: Manual Setup
+
+<details>
+<summary>Click to expand manual steps</summary>
+
+#### 1. Install
 
 ```bash
 npm install @1claw/base-mcp-secure
 ```
 
-### 2. Store your secrets in 1Claw
+#### 2. Store your secrets in 1Claw
 
 ```bash
 npx @1claw/cli login
@@ -43,7 +67,7 @@ npx @1claw/cli secret put base-mcp/coinbase-api-private-key --value "-----BEGIN 
 npx @1claw/cli secret put base-mcp/alchemy-api-key --value "your_key"
 ```
 
-### 3. Create a secured agent
+#### 3. Create a secured agent
 
 ```bash
 npx @1claw/cli agent create \
@@ -55,7 +79,11 @@ npx @1claw/cli agent create \
   --tx-daily-limit "1.0"
 ```
 
+</details>
+
 ### 4. Update your MCP config
+
+The setup script outputs this for you, but here's the config manually. **Both MCPs share the same agent key** — they compose into one unified toolset:
 
 ```json
 {
@@ -66,12 +94,34 @@ npx @1claw/cli agent create \
       "env": {
         "ONECLAW_AGENT_API_KEY": "ocv_your_key_here"
       }
+    },
+    "1claw": {
+      "command": "npx",
+      "args": ["@1claw/mcp"],
+      "env": {
+        "ONECLAW_AGENT_API_KEY": "ocv_your_key_here"
+      }
     }
   }
 }
 ```
 
-**That's it.** One env var. Zero secrets on disk.
+**That's it.** One env var. Zero secrets on disk. Two MCPs, one agent.
+
+## Why Both MCPs?
+
+The `base-mcp-secure` and `1claw` MCP servers use the **same agent credentials** and complement each other:
+
+| MCP Server | What it provides |
+|-----------|-----------------|
+| **base-mcp-secure** | All Base MCP tools (transfer_funds, deploy_contract, erc20_transfer, get_balance, get_morpho_vaults, mint_nft, onramp, Farcaster) — but TEE-signed and guardrail-enforced |
+| **1claw** | 27+ vault management tools (put_secret, get_secret, rotate_and_store, simulate_transaction, sign_message, sign_typed_data, grant_access, share_secret, platform tools, etc.) |
+
+Together they enable flows like:
+- *"Store my new Alchemy key in the vault, then check my Base wallet balance"* — uses both MCPs in one conversation
+- *"Rotate my Coinbase API key and update it in the vault"* — 1claw MCP handles the rotation
+- *"Simulate this Morpho deposit, then execute it if profitable"* — simulate via 1claw, execute via base-mcp-secure
+- *"Share read access to my neynar key with my teammate's agent"* — 1claw MCP handles sharing
 
 ## How It Works
 
