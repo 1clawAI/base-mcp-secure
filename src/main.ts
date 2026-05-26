@@ -2,15 +2,16 @@
 /**
  * @1claw/base-mcp-secure — MCP server entrypoint.
  *
- * Drop-in replacement for base-mcp that bootstraps credentials from 1Claw Vault
- * and routes all signing through the Intents API (TEE-backed, guardrail-enforced).
+ * Secure AgentKit MCP server for autonomous AI agents on Base. Bootstraps
+ * credentials from 1Claw Vault and routes all signing through the Intents API
+ * (TEE-backed, guardrail-enforced).
  *
  * Usage:
  *   ONECLAW_AGENT_API_KEY=ocv_xxx npx @1claw/base-mcp-secure
  *
  * The server resolves all required API keys from your 1Claw vault at startup,
- * injects them into the process environment, then starts the standard base-mcp
- * MCP server with the Intents wallet provider active.
+ * injects them into the process environment, then starts the AgentKit MCP server
+ * with the Intents wallet provider active.
  */
 
 import { bootstrapSecrets, injectIntoEnv } from "./bootstrap.js";
@@ -59,7 +60,7 @@ async function main() {
   console.error("[base-mcp-secure] All transactions route through 1Claw Intents API (TEE-signed)");
   console.error("[base-mcp-secure] Guardrails active: allowlists, value caps, daily limits, simulation");
 
-  // Delegate to base-mcp's MCP server with our patched environment
+  // Delegate to AgentKit's MCP server with our patched environment
   try {
     await import("@coinbase/agentkit/mcp");
   } catch {

@@ -1,29 +1,47 @@
 # @1claw/base-mcp-secure
 
-**Run Base MCP without the .env file.**
+**Secure AgentKit wallet for autonomous AI agents on Base.**
 
-A drop-in companion for [Base MCP](https://github.com/base/base-mcp) that keeps the full feature set — wallet ops, Morpho lending, NFT transfers, onramp, Farcaster resolution — without ever putting a seed phrase or API key on disk.
+A hardened MCP server built on [Coinbase AgentKit](https://github.com/coinbase/agentkit) that lets autonomous agents operate on Base with TEE-backed signing, programmatic guardrails, and zero secrets on disk.
 
-> Base MCP gives agents the keys to the chain. 1Claw makes sure the agent never actually holds them.
+> Your agent gets the full onchain toolkit. 1Claw makes sure it never actually holds the keys.
+
+## Which Should I Use?
+
+| | [mcp.base.org](https://docs.base.org/ai-agents/quickstart) | @1claw/base-mcp-secure |
+|--|--|--|
+| **Use case** | Interactive (human in the loop) | Autonomous (no human per-tx) |
+| **Signing** | OAuth via Base Account, you approve each tx | TEE-backed Intents API, guardrails approve |
+| **Setup** | Connect remote MCP, sign in once | One agent key, programmatic config |
+| **Keys** | None needed (Base Account manages them) | Stored in 1Claw Vault (HSM + MPC) |
+| **Best for** | Claude Desktop, ChatGPT, Cursor chat | Cron jobs, multi-agent systems, background workers, trading bots |
+| **Limits** | Human reviews every action | Programmable: per-tx caps, daily limits, address allowlists |
+
+**TL;DR:** If a human approves every transaction, use `mcp.base.org`. If your agent runs unattended, use this.
 
 ## The Problem
 
-Base MCP currently tells you to paste a 12/24-word seed phrase, Coinbase API private key, Alchemy key, and OpenRouter key into either a `.env` file or — worse — into `claude_desktop_config.json` in plaintext. Then it hands the LLM `transfer-funds`, `deploy-contract`, `call_contract`, and `erc20_transfer` with no allowlists, no value caps, no simulation, and no audit trail.
+AgentKit gives agents powerful onchain tools — transfers, contract calls, DeFi interactions. But running AgentKit autonomously means storing seed phrases or API keys somewhere, and trusting the agent (or whatever prompts it) not to drain the wallet.
 
-One prompt injection through a poisoned Farcaster username or a malicious tool result and the wallet is gone.
+Without guardrails:
+- A prompt injection through a poisoned input can trigger unlimited transfers
+- Seed phrases sit in `.env` files or config JSON in plaintext
+- No per-transaction or daily spend limits
+- No audit trail of what the agent did or why
+- No way to instantly revoke access
 
 ## The Solution
 
 ```
-Claude/Cursor ─► Shroud TEE ─► LLM ─► base-mcp-secure (Vault-bootstrapped) ─► Intents API ─► Base
+Agent ─► Shroud TEE ─► LLM ─► base-mcp-secure (AgentKit + Vault) ─► Intents API ─► Base
 ```
 
-| Surface | What it replaces | How |
-|---------|-----------------|-----|
-| **Vault** | The `.env` file | Secrets resolved from HSM-encrypted vault at boot. Never touch disk. MPC optional. |
-| **Intents API** | Local seed signer | All signing happens in a TEE with per-agent guardrails enforced server-side. |
-| **Shroud** | Nothing (new) | 11-layer inspection pipeline blocks prompt injection before the model acts. |
-| **Policy Engine** | Nothing (new) | Fine-grained access control — agents only see secrets they're granted. |
+| Surface | What it does | How |
+|---------|-------------|-----|
+| **Vault** | Eliminates secrets on disk | Credentials resolved from HSM-encrypted vault at boot. Never touch disk. MPC optional. |
+| **Intents API** | Replaces local signing | All signing happens in a TEE with per-agent guardrails enforced server-side. |
+| **Shroud** | Blocks prompt injection | 11-layer inspection pipeline scores and blocks attacks before the model acts. |
+| **Policy Engine** | Fine-grained access | Agents only see secrets they're explicitly granted by a human. |
 
 ## Quick Start
 
@@ -37,7 +55,7 @@ npm run setup
 ```
 
 The setup wizard asks for your 1Claw human API key (`1ck_...`) and automatically creates:
-- A vault for your Base MCP secrets
+- A vault for your agent's secrets
 - An agent with Intents API + Shroud + Base guardrails
 - A signing key on Base chain
 - An access policy granting the agent read on `base-mcp/*`
@@ -61,7 +79,7 @@ npm install @1claw/base-mcp-secure
 
 ```bash
 npx @1claw/cli login
-npx @1claw/cli vault create --name "base-mcp-keys"
+npx @1claw/cli vault create --name "base-agent-keys"
 npx @1claw/cli secret put base-mcp/seed-phrase --value "your seed phrase"
 npx @1claw/cli secret put base-mcp/coinbase-api-private-key --value "-----BEGIN EC..."
 npx @1claw/cli secret put base-mcp/alchemy-api-key --value "your_key"
@@ -114,7 +132,7 @@ The `base-mcp-secure` and `1claw` MCP servers use the **same agent credentials**
 
 | MCP Server | What it provides |
 |-----------|-----------------|
-| **base-mcp-secure** | All Base MCP tools (transfer_funds, deploy_contract, erc20_transfer, get_balance, get_morpho_vaults, mint_nft, onramp, Farcaster) — but TEE-signed and guardrail-enforced |
+| **base-mcp-secure** | All AgentKit onchain tools (transfers, contract calls, ERC-20, Morpho, NFTs, Farcaster) — but TEE-signed and guardrail-enforced |
 | **1claw** | 27+ vault management tools (put_secret, get_secret, rotate_and_store, simulate_transaction, sign_message, sign_typed_data, grant_access, share_secret, platform tools, etc.) |
 
 Together they enable flows like:
@@ -131,11 +149,11 @@ Together they enable flows like:
 2. Authenticates to 1Claw with a short-lived JWT (from the `ocv_` API key)
 3. Resolves `SEED_PHRASE`, `COINBASE_API_PRIVATE_KEY`, `ALCHEMY_API_KEY`, etc. from the vault
 4. Injects credentials into process memory (never written to disk)
-5. Starts the standard Base MCP server with the Intents wallet provider active
+5. Starts the AgentKit MCP server with the Intents wallet provider active
 
 ### Transaction flow
 
-1. LLM emits `transfer-funds` tool call
+1. LLM emits a tool call (transfer, swap, contract interaction)
 2. Shroud inspects the request (injection scoring, PII detection, exfil blocking)
 3. `OneclawIntentsWalletProvider` converts it to an Intents API call
 4. Server-side guardrails enforce: chain allowlist, address allowlist, value cap, daily limit
@@ -214,12 +232,12 @@ console.log(`TX: ${result.txHash} (${result.status})`);
 
 ## Docs
 
-- [Migration from Base MCP](docs/migration-from-base-mcp.md) — Step-by-step migration guide
+- [Migration Guide](docs/migration-from-base-mcp.md) — Moving from plaintext secrets to 1Claw
 - [Policy Recipes](docs/policy-recipes.md) — Pre-built guardrail configs for common use cases
 
 ## Security Comparison
 
-| Threat Vector | Base MCP | base-mcp-secure |
+| Threat Vector | Unguarded AgentKit | base-mcp-secure |
 |--------------|----------|-----------------|
 | Seed phrase on disk | `.env` / config JSON | Never touches disk (Vault + MPC) |
 | Prompt injection → drain | Unguarded | Shroud blocks + guardrails cap |
@@ -231,12 +249,20 @@ console.log(`TX: ${result.txHash} (${result.status})`);
 | Access revocation | Delete files | Instant (policy delete / JWT revoke) |
 | Key rotation | Manual seed replacement | One CLI command |
 
+## Relationship to mcp.base.org
+
+The new [Base MCP](https://docs.base.org/ai-agents/quickstart) at `mcp.base.org` is a hosted remote server designed for interactive use. It uses OAuth and Base Account wallets — a human approves every transaction. It's the right choice for conversational use in Claude, ChatGPT, or Cursor.
+
+This package serves a different need: agents that run autonomously without human-in-the-loop approval. Think trading bots, automated treasury management, multi-agent workflows, CI/CD pipelines. The guardrails are programmatic (value caps, allowlists, daily limits, simulation) rather than requiring a human to click "approve" each time.
+
+Both can coexist in the same MCP config if you want interactive Base Account tools alongside autonomous 1Claw-secured operations.
+
 ## x402 Integration
 
 This package works with 1Claw's x402 micropayment system. The agent pays per-request in USDC on Base via the Coinbase CDP facilitator. The whole loop is circular and on-chain:
 
 ```
-Agent uses Base MCP to act onchain
+Agent uses AgentKit to act onchain
   → pays 1Claw per-request in USDC on Base
   → signs via Intents API on Base
   → everything is on Base

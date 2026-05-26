@@ -1,17 +1,22 @@
-# Migration from Base MCP
+# Migration Guide
 
-This guide shows how to move from a standard `base-mcp` setup (with secrets in `.env` or `claude_desktop_config.json`) to `@1claw/base-mcp-secure` in under 10 minutes.
+> **Note:** The `base-mcp` npm package (`@coinbase/base-mcp`) has been deprecated and archived. If you were using it, you have two paths forward:
+>
+> - **[mcp.base.org](https://docs.base.org/ai-agents/quickstart)** — Remote hosted MCP with OAuth wallet and human approval per transaction. Best for interactive use in Claude, ChatGPT, or Cursor.
+> - **@1claw/base-mcp-secure** — Self-hosted AgentKit MCP with TEE signing and programmatic guardrails. Best for autonomous agents that run without human-in-the-loop approval.
+>
+> This guide covers migrating to `@1claw/base-mcp-secure` for autonomous agent use cases.
 
-## Before: Insecure Setup
+## Before: Plaintext Secrets
 
-Your current `claude_desktop_config.json` probably looks like this:
+If you were running AgentKit (or the old base-mcp) locally, your config likely looked like this:
 
 ```json
 {
   "mcpServers": {
-    "base-mcp": {
+    "base-agent": {
       "command": "npx",
-      "args": ["-y", "@coinbase/base-mcp"],
+      "args": ["-y", "@coinbase/agentkit"],
       "env": {
         "SEED_PHRASE": "abandon ability able about above absent absorb ...",
         "COINBASE_API_KEY_NAME": "organizations/xxx/apiKeys/yyy",
@@ -62,8 +67,8 @@ npx @1claw/cli login
 ### Step 2: Create a Vault and Store Your Secrets (3 min)
 
 ```bash
-# Create a vault for Base MCP secrets
-npx @1claw/cli vault create --name "base-mcp-keys"
+# Create a vault for your agent secrets
+npx @1claw/cli vault create --name "base-agent-keys"
 
 # Store each secret (they get encrypted with HSM-backed envelope encryption)
 npx @1claw/cli secret put base-mcp/seed-phrase --value "your seed phrase here"
@@ -102,7 +107,7 @@ npx @1claw/cli policy create \
 
 ### Step 5: Update Your Config (1 min)
 
-Replace your `claude_desktop_config.json` MCP entry:
+Replace your MCP config entry:
 
 ```json
 {
@@ -118,12 +123,12 @@ Replace your `claude_desktop_config.json` MCP entry:
 }
 ```
 
-### Step 6: Delete Your Old .env File
+### Step 6: Delete Your Old Secrets
 
 ```bash
 # Once you've confirmed the secured setup works:
 rm .env
-# Remove secrets from claude_desktop_config.json
+# Remove secrets from claude_desktop_config.json or .cursor/mcp.json
 ```
 
 ## What Changed
@@ -141,7 +146,7 @@ rm .env
 
 ## Optional: Enable Shroud LLM Proxy
 
-For defense against prompt injection via Farcaster bios, tool results, or malicious contexts:
+For defense against prompt injection via tool results, user inputs, or malicious contexts:
 
 ```bash
 npx @1claw/cli agent update YOUR_AGENT_ID --shroud true
@@ -149,6 +154,16 @@ npx @1claw/cli agent update YOUR_AGENT_ID --shroud true
 
 This routes all LLM calls through Shroud's inspection pipeline before they reach the model, blocking injection attempts in real time.
 
+## Or Use mcp.base.org Instead
+
+If your use case is interactive (a human reviews each transaction), the new [Base MCP](https://docs.base.org/ai-agents/quickstart) at `mcp.base.org` is simpler to set up:
+
+1. Connect the remote MCP server URL: `https://mcp.base.org`
+2. Sign in with Base Account (OAuth)
+3. Approve each transaction when prompted
+
+No keys, no vault, no agent credentials needed. The trade-off is that every action requires human approval — there's no autonomous mode.
+
 ## Rollback
 
-If you need to go back temporarily, just swap your MCP config entry back to `@coinbase/base-mcp` with the env vars. Your secrets remain safely stored in 1Claw for when you're ready to switch back.
+If you need to go back temporarily, just swap your MCP config entry back to a standard AgentKit setup with env vars. Your secrets remain safely stored in 1Claw for when you're ready to switch back.
