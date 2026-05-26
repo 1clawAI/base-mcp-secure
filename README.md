@@ -48,8 +48,8 @@ Agent ─► Shroud TEE ─► LLM ─► base-mcp-secure (AgentKit + Vault) ─
 ### Option A: One-Command Setup (Recommended)
 
 ```bash
-git clone https://github.com/1clawAI/base-mcp-secure.git
-cd base-mcp-secure
+git clone https://github.com/1clawAI/1claw-agentkit.git
+cd 1claw-agentkit
 npm install
 npm run setup
 ```
@@ -266,7 +266,7 @@ The new [Base MCP](https://docs.base.org/ai-agents/quickstart) at `mcp.base.org`
 
 This package serves a different need: agents that run autonomously without human-in-the-loop approval. Think trading bots, automated treasury management, multi-agent workflows, CI/CD pipelines. The guardrails are programmatic (value caps, allowlists, daily limits, simulation) rather than requiring a human to click "approve" each time.
 
-Both can coexist in the same MCP config if you want interactive Base Account tools alongside autonomous 1Claw-secured operations.
+They are alternatives, not companions — both expose the same AgentKit tools (transfers, Morpho, NFTs, Farcaster) but with different trust models. Pick one based on whether a human is present to approve actions.
 
 ## x402 Integration
 

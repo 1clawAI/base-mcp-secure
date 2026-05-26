@@ -46,11 +46,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/1clawAI/base-mcp-secure.git"
+    "url": "https://github.com/1clawAI/1claw-agentkit.git"
   },
-  "homepage": "https://github.com/1clawAI/base-mcp-secure#readme",
+  "homepage": "https://github.com/1clawAI/1claw-agentkit#readme",
   "bugs": {
-    "url": "https://github.com/1clawAI/base-mcp-secure/issues"
+    "url": "https://github.com/1clawAI/1claw-agentkit/issues"
   },
   "keywords": [
     "base",
