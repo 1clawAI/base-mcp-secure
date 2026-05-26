@@ -1,0 +1,66 @@
+{
+  "name": "@1claw/base-mcp-secure",
+  "version": "0.1.0",
+  "description": "Run Base MCP without the .env file — secure credential management and transaction signing for Base MCP via 1Claw",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "bin": {
+    "base-mcp-secure": "dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@1claw/sdk": "^0.20.0",
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@coinbase/coinbase-sdk": ">=0.12.0",
+    "@coinbase/agentkit": ">=0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@coinbase/coinbase-sdk": { "optional": true },
+    "@coinbase/agentkit": { "optional": true }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1clawAI/base-mcp-secure.git"
+  },
+  "homepage": "https://github.com/1clawAI/base-mcp-secure#readme",
+  "bugs": {
+    "url": "https://github.com/1clawAI/base-mcp-secure/issues"
+  },
+  "keywords": [
+    "base",
+    "mcp",
+    "security",
+    "1claw",
+    "secrets",
+    "wallet",
+    "agent",
+    "ai",
+    "coinbase",
+    "agentkit"
+  ]
+}

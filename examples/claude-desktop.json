@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "base-mcp-secure": {
+      "command": "npx",
+      "args": ["@1claw/base-mcp-secure"],
+      "env": {
+        "ONECLAW_AGENT_API_KEY": "ocv_your_agent_api_key_here"
+      }
+    },
+    "1claw": {
+      "command": "npx",
+      "args": ["@1claw/mcp"],
+      "env": {
+        "ONECLAW_AGENT_API_KEY": "ocv_your_agent_api_key_here"
+      }
+    }
+  }
+}
